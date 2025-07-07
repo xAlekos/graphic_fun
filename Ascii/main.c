@@ -122,13 +122,12 @@ framebuffer* frame_buffer_init(){
 }
 
 void framebuffer_print(framebuffer* fb){
-
-    printf("\x1b[H"); // riporta il cursore in alto a sinistra
+    printf("\x1b[H\x1b[2J"); // pulisce schermo e riporta il cursore in alto a sinistra
     for(int i = 0;i<FRAME_BUFFER_HEIGHT;i++){
         for(int j=0;j<FRAME_BUFFER_WIDTH;j++){
             putchar((*fb)[i][j]);
         } 
-        printf("\n");
+        putchar('\n'); 
     }
 }
 

@@ -1,0 +1,1 @@
+gcc -Wall -o raytracer `pkg-config raylib --cflags --libs` main.c -lm
