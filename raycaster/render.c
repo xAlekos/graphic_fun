@@ -1,29 +1,29 @@
 #include "render.h"
 
 
-framebuffer* fb_init(){
-    
-    framebuffer* new_fb = malloc(sizeof(framebuffer));
-    memset(new_fb,0,sizeof(framebuffer));
-    return new_fb;
+framebuffer* fb_init(int width, int height) {
+    framebuffer* fb = malloc(sizeof(framebuffer));
+    fb->width = width;
+    fb->height = height;
+    fb->pixels = calloc(width * height, sizeof(Color));  // inizializzato a nero
 
+    Image img = GenImageColor(width, height, BLACK);
+
+    fb->texture = LoadTextureFromImage(img); 
+    UnloadImage(img);
+    return fb;
 }
 
-void draw_pixel(int data,int i , int j){
-
-    switch(data){
-        case 0: DrawRectangle(j,i,1,1,RED); break;
-        case 1: DrawRectangle(j,i,1,1,BLUE); break;
+void set_fb_pixel(framebuffer* fb, int x, int y, Color color) {
+    if (x >= 0 && x < fb->width && y >= 0 && y < fb->height) {
+        fb->pixels[y * fb->width + x] = color;
     }
-
 }
 
 void draw_fb(framebuffer* fb){
 
-    for(int i = 0; i < FB_HEIGHT ; i++){
-        for(int j = 0 ; j < FB_WIDTH; j++)
-            draw_pixel((*fb)[i][j],i,j);
-    }
+    UpdateTexture(fb->texture, fb->pixels);
+    DrawTexture(fb->texture, 0, 0, WHITE);
 
 }
 
@@ -31,9 +31,9 @@ void draw_rays(float x ,float y ,float scale,cam* camera,int screen_width){
 
     for(int i = 0 ; i<screen_width;i+=300){
         Vector2 ray = get_ray_dir(i,screen_width,camera);
-        ray = Vector2Scale(ray, scale);
-        
-        Vector2 origin = Vector2Add(camera->pos,(Vector2){x,y}); 
+        ray = Vector2Scale(ray, scale * 5);
+        Vector2 scaled_pos = Vector2Scale(camera->pos,(scale + GRID_OFFSET));
+        Vector2 origin = Vector2Add(scaled_pos,(Vector2){x,y}); 
         Vector2 line_end = Vector2Add(origin, ray);
         Vector2 line_end_over = Vector2Add(line_end, ray);
 
@@ -43,12 +43,7 @@ void draw_rays(float x ,float y ,float scale,cam* camera,int screen_width){
     }
 }
 
-void draw_map(float x, float y,float scale ,cam* camera,int screen_width){
-
-    map grid={0};
-    grid[0][0] = 1;
-    grid[0][1] = 1;
-    grid[0][2] = 1;
+void draw_map(map* grid, float x, float y,float scale ,cam* camera,int screen_width){
 
     Rectangle grid_frame = {.height = MAP_H*(scale + GRID_OFFSET) - GRID_OFFSET, .width = MAP_W*(scale + GRID_OFFSET) - GRID_OFFSET, .x = x, .y = y};
     
@@ -56,7 +51,7 @@ void draw_map(float x, float y,float scale ,cam* camera,int screen_width){
     //GRID
     for(int i = 0;i<MAP_H;i++){
         for(int j = 0;j<MAP_W;j++){
-            switch(grid[i][j]){
+            switch((*grid)[i][j]){
             case 0: DrawRectangle(x + j*(scale + GRID_OFFSET) ,y + i*(scale + GRID_OFFSET),scale,scale,WHITE); break;
             case 1: DrawRectangle(x +j*(scale + GRID_OFFSET),y + i*(scale + GRID_OFFSET),scale,scale,YELLOW); break;
             }
@@ -66,25 +61,37 @@ void draw_map(float x, float y,float scale ,cam* camera,int screen_width){
     DrawRectangleLinesEx(grid_frame,4,MAGENTA);
 
     draw_rays(x,y,scale,camera,screen_width);
-    //DrawLine(line1_end.x, line1_end.y, line2_end.x, line2_end.y, GREEN);
 
-    DrawCircle(x + camera->pos.x,y + camera->pos.y, scale/4, MAROON);
+    DrawCircle(x + camera->pos.x * (scale + GRID_OFFSET),y + camera->pos.y * (scale + GRID_OFFSET), scale/4, MAROON);
 }
 
 
 
 void render_loop(){
 
-    InitWindow(FB_WIDTH,FB_HEIGHT,"pizzap");
-    framebuffer* fb = fb_init();
+    InitWindow(FB_WIDTH,FB_HEIGHT,"pizzapo");
+    framebuffer* fb = fb_init(FB_WIDTH,FB_HEIGHT);
     cam* camera = camera_init();
+    //levare di qua
+    map grid={0};
+    for(int i = 0;i<MAP_W;i++){
+        grid[0][i]=1;
+        grid[MAP_H - 1][i]=1;
+        grid[i][0]=1;
+        grid[i][MAP_W - 1]=1;
+    }
+
+    
     while (!WindowShouldClose())
     {
-        ClearBackground(BLACK);
         input(camera);
         BeginDrawing();
-        //draw_fb(fb);
-        draw_map(1024,15,20,camera,FB_WIDTH);
+        ClearBackground(BLACK);
+        draw_fb(fb);
+        dda_ray_direction(get_ray_dir(0,FB_WIDTH,camera),camera->pos,&grid,20);
+        dda_ray_direction(get_ray_dir(FB_WIDTH - 1,FB_WIDTH,camera),camera->pos,&grid,20);
+        draw_map(&grid,1024,15,20,camera,FB_WIDTH);
+        DrawText(TextFormat("%d FPS", GetFPS()), 200, 60, 20, RED);
         DrawText(TextFormat("pos -> x: %f  y: %f", camera->pos.x, camera->pos.y), 200, 80, 20, RED);
         DrawText(TextFormat("dir -> x: %f  y: %f", camera->dir.x, camera->dir.y), 200, 100, 20, MAGENTA);
 
@@ -92,6 +99,8 @@ void render_loop(){
 
     }
     free(camera);
+    free(fb->pixels);
+    UnloadTexture(fb->texture);
     free(fb);
 
 

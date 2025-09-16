@@ -10,15 +10,21 @@
 #define FB_WIDTH 2048
 #define FB_HEIGHT 1400
 
-typedef int framebuffer[FB_HEIGHT][FB_WIDTH];
+typedef struct framebuffer {
+    Color* pixels;
+    Texture2D texture;
+    int width;
+    int height;
+} framebuffer;
 
-framebuffer* fb_init();
 
-void draw_pixel(int data,int i , int j);
+framebuffer* fb_init(int width, int height);
+
+void set_fb_pixel(framebuffer* fb, int x, int y, Color color);
 
 void draw_fb(framebuffer* fb);
 
-void draw_map(float x, float y,float scale,cam* camera,int screen_width);
+void draw_map(map* grid, float x, float y,float scale ,cam* camera,int screen_width);
 
 void render_loop();
 #endif
