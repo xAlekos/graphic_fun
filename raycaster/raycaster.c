@@ -19,33 +19,38 @@ Vector2 get_ray_dir(int screen_x,int screen_width,cam* camera){
 
 }
 
-void dda_ray_direction(Vector2 ray_dir,Vector2 ray_origin,map* grid ,int scale){
+void dda_ray_direction(map* grid,Vector2* path_buf,Vector2 ray_dir,Vector2 ray_origin){
 
     int i = 0;
-    int x_s = ray_origin.x;
-    int y_s = ray_origin.y;
+    float x_s = ray_origin.x;
+    float y_s = ray_origin.y;
     float s_x = sqrtf(1 + (ray_dir.y/ray_dir.x) * (ray_dir.y/ray_dir.x));
     float s_y = sqrtf(1 + (ray_dir.x / ray_dir.y) * (ray_dir.x / ray_dir.y));
-    float len_x = s_x;
-    float len_y = s_y;
+    
+  
+    float first_step_x = ray_dir.x > 0 ? 1 -(x_s - floorf(x_s)) : x_s - floorf(x_s);
+    float first_step_y = ray_dir.y > 0 ? 1 -(y_s - floorf(y_s)) : y_s - floorf(y_s);
     int step_x = ray_dir.x > 0 ? 1 : -1;
     int step_y = ray_dir.y > 0 ? 1 : -1;
-    (*grid)[y_s][x_s]=1;
+    
+    float len_x = first_step_x * s_x;
+    float len_y = first_step_y * s_y;
+
+
+    path_buf[0]=(Vector2){x_s,y_s};
     
 
-    while(i < 8){
+    while(i < 7){
         i++;
         if(len_x > len_y){
-            y_s += step_y;
+            y_s = fmax(fmin(MAP_H - 1, y_s + step_y),0); 
             len_y += s_y;
         }
         else{
-            x_s += step_x;
+            x_s = fmax(fmin(MAP_W - 1, x_s + step_x),0); 
             len_x += s_x;
         }
-        (*grid)[y_s][x_s]=1;
+        path_buf[i] = (Vector2){x_s,y_s};
     }
 
-
-    
 }

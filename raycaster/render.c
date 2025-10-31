@@ -31,7 +31,7 @@ void draw_rays(float x ,float y ,float scale,cam* camera,int screen_width){
 
     for(int i = 0 ; i<screen_width;i+=300){
         Vector2 ray = get_ray_dir(i,screen_width,camera);
-        ray = Vector2Scale(ray, scale * 5);
+        ray = Vector2Scale(ray, scale * 3);
         Vector2 scaled_pos = Vector2Scale(camera->pos,(scale + GRID_OFFSET));
         Vector2 origin = Vector2Add(scaled_pos,(Vector2){x,y}); 
         Vector2 line_end = Vector2Add(origin, ray);
@@ -65,7 +65,11 @@ void draw_map(map* grid, float x, float y,float scale ,cam* camera,int screen_wi
     DrawCircle(x + camera->pos.x * (scale + GRID_OFFSET),y + camera->pos.y * (scale + GRID_OFFSET), scale/4, MAROON);
 }
 
+void hightlight_path(int len,Vector2* path, map* draw_grid){
 
+    for(int i = 0; i<len; i++)
+        (*draw_grid)[(int)(path[i].y)][(int)(path[i].x)]=1;
+}
 
 void render_loop(){
 
@@ -73,14 +77,15 @@ void render_loop(){
     framebuffer* fb = fb_init(FB_WIDTH,FB_HEIGHT);
     cam* camera = camera_init();
     //levare di qua
-    map grid={0};
+    map grid= {0};
+    map draw_grid = {0};
     for(int i = 0;i<MAP_W;i++){
         grid[0][i]=1;
         grid[MAP_H - 1][i]=1;
         grid[i][0]=1;
         grid[i][MAP_W - 1]=1;
     }
-
+    //-----
     
     while (!WindowShouldClose())
     {
@@ -88,9 +93,14 @@ void render_loop(){
         BeginDrawing();
         ClearBackground(BLACK);
         draw_fb(fb);
-        dda_ray_direction(get_ray_dir(0,FB_WIDTH,camera),camera->pos,&grid,20);
-        dda_ray_direction(get_ray_dir(FB_WIDTH - 1,FB_WIDTH,camera),camera->pos,&grid,20);
-        draw_map(&grid,1024,15,20,camera,FB_WIDTH);
+        memcpy(draw_grid, grid, sizeof(map));
+        Vector2 path1[7];
+        Vector2 path2[7];
+        dda_ray_direction(&grid,path1,get_ray_dir(0,FB_WIDTH,camera),camera->pos);
+        dda_ray_direction(&grid,path2,get_ray_dir(FB_WIDTH - 1,FB_WIDTH,camera),camera->pos);
+        hightlight_path(7,path1,&draw_grid);
+        hightlight_path(7,path2,&draw_grid);
+        draw_map(&draw_grid,1024,15,20,camera,FB_WIDTH);
         DrawText(TextFormat("%d FPS", GetFPS()), 200, 60, 20, RED);
         DrawText(TextFormat("pos -> x: %f  y: %f", camera->pos.x, camera->pos.y), 200, 80, 20, RED);
         DrawText(TextFormat("dir -> x: %f  y: %f", camera->dir.x, camera->dir.y), 200, 100, 20, MAGENTA);

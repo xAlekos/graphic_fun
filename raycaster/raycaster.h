@@ -19,5 +19,5 @@ typedef int map[MAP_H][MAP_W];
 
 cam* camera_init();
 Vector2 get_ray_dir(int screen_x,int screen_width,cam* camera);
-void dda_ray_direction(Vector2 ray_dir,Vector2 ray_origin,map* grid ,int scale);
+void dda_ray_direction(map* grid,Vector2* path_buf,Vector2 ray_dir,Vector2 ray_origin);
 #endif

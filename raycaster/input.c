@@ -3,13 +3,13 @@
 void input(cam* camera){
     float delta = GetFrameTime();
     if(IsKeyDown(KEY_W))
-        camera->pos.y -= MOV_SPEED * delta;
+        camera->pos.y = fmax(camera->pos.y  - MOV_SPEED * delta,0);
     if(IsKeyDown(KEY_S))
-        camera->pos.y += MOV_SPEED * delta;
+        camera->pos.y = fmin(camera->pos.y + MOV_SPEED * delta,MAP_H - 0.25);
     if(IsKeyDown(KEY_A))
-        camera->pos.x -= MOV_SPEED * delta;
+        camera->pos.x = fmax(camera->pos.x - MOV_SPEED * delta,0);
     if(IsKeyDown(KEY_D))
-        camera->pos.x += MOV_SPEED * delta;
+        camera->pos.x = fmin(camera->pos.x + MOV_SPEED * delta,MAP_W  - 0.25);
     if(IsKeyDown(KEY_LEFT)){
         Vector2 old_dir = camera->dir;
         Vector2 old_plane = camera->plane_half_lenght;

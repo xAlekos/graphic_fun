@@ -7,8 +7,8 @@
 #define MAP_GRID_SCALE 40
 #define GRID_OFFSET 5
 
-#define FB_WIDTH 2048
-#define FB_HEIGHT 1400
+#define FB_WIDTH 1600
+#define FB_HEIGHT 1024
 
 typedef struct framebuffer {
     Color* pixels;
